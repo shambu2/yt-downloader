@@ -45,11 +45,15 @@ export function HeroSection() {
       // Convert response to blob
       const blob = await response.blob();
       
+      // const contentDisposition = response.headers.get('Content-Disposition');
+      // const filename = contentDisposition?.match(/filename="?(.+)"?/i)?.[1] || 'video.mp4';
+      
+
       // Create download link
       const downloadUrl = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = downloadUrl;
-      a.download = downloadUrl;
+      a.download = "video.mp4"; // filename
       document.body.appendChild(a);
       a.click();
       

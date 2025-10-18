@@ -32,6 +32,14 @@ app.post("/download", async (req, res) => {
     url
   ]);
 
+  const infoProcess = spawn("yt-dlp", [
+    "--get-title",
+    "--get-filename",
+    "-o", "%(title)s",
+    url
+  ]);
+
+
   // Use ffmpeg to ensure proper MP4 format with streaming support
   const ffmpegProcess = spawn("ffmpeg", [
     "-i", "pipe:0",        // input from stdin
