@@ -1,8 +1,10 @@
 import express from "express";
 import { spawn } from "child_process";
 import rateLimit from "express-rate-limit";
-
+import cors from "cors";
 const app = express();
+// app.use(express.urlencoded({ extended: true }));
+app.use(cors())
 app.use(express.json())
 app.use(rateLimit({ windowMs: 60_000, max: 5 }));
 
@@ -11,9 +13,11 @@ const validateYouTubeUrl = (url) =>
   /^https:\/\/(www\.)?youtube\.com\/watch\?v=[\w-]{11}/.test(url) ||
   /^https:\/\/youtu\.be\/[\w-]{11}/.test(url);
 
-app.get("/download", async (req, res) => {
+app.post("/download", async (req, res) => {
   // const url = req.query.url;
-  const url = req.body.url;
+  // const url = req.body.url;
+  // const url = req.params.url;
+  const {url} = req.body;
 
   if (!url || !validateYouTubeUrl(url)) {
     return res.status(400).send("Invalid YouTube URL");

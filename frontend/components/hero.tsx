@@ -1,18 +1,72 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { Download } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { motion } from "framer-motion"
-
+import { Download } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { motion } from "framer-motion";
+import { useState } from "react";
+import axios from "axios";
 
 export function HeroSection() {
+  const [url, setUrl] = useState<any>("");
+  // const [loading, setLoading] = useState(true);
+
+  const handleDownload = async () => {
+    try {
+      // const response = await axios.post("http://localhost:4000/download", {
+      //   url: url,
+      //   responseType: "blob", // Important for binary data
+      // });
+
+      // const blob = new Blob([response.data], { type: "video/mp4" });
+      // const blobUrl = URL.createObjectURL(blob);
+
+      // const a = document.createElement("a");
+      // a.href = blobUrl;
+      // a.download = "video.mp4"; // filename
+      // document.body.appendChild(a); // required for Firefox
+      // a.click();
+      // a.remove();
+
+      const response = await fetch('http://localhost:4000/download', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ url }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Download failed');
+      }
+
+      // Convert response to blob
+      const blob = await response.blob();
+      
+      // Create download link
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      a.download = downloadUrl;
+      document.body.appendChild(a);
+      a.click();
+      
+      // Cleanup
+      window.URL.revokeObjectURL(downloadUrl);
+      document.body.removeChild(a);
+
+      // toast.success('Download complete!');
+
+    } catch (error) {
+      // console.error("Error:", error);
+      throw error;
+    }
+  };
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden px-4 py-20">
-    
-
       <div className="max-w-4xl w-full space-y-12">
         {/* Header */}
         <motion.div
@@ -22,7 +76,9 @@ export function HeroSection() {
           className="text-center space-y-4"
         >
           <div className="inline-block px-4 py-2 rounded-full bg-blue-600/10 border border-blue-500/30 mb-4">
-            <span className="text-sm font-medium text-blue-600">Download Videos Instantly</span>
+            <span className="text-sm font-medium text-blue-600">
+              Download Videos Instantly
+            </span>
           </div>
           <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-balance">
             Download YouTube Videos
@@ -31,41 +87,36 @@ export function HeroSection() {
             </span>
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto text-balance">
-            Fast, secure, and simple. Download any YouTube video in the highest quality available. No registration
-            required.
+            Fast, secure, and simple. Download any YouTube video in the highest
+            quality available. No registration required.
           </p>
         </motion.div>
 
         {/* Input Form */}
-        <motion.form
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-        //   onSubmit={}
-          className="space-y-4"
-        >
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Input
-              type="url"
-              placeholder="Paste YouTube link here..."
-            //   value={url}
-            //   onChange={(e) => setUrl(e.target.value)}
-              className="flex-1 h-14 px-6 bg-secondary/50 border-secondary text-foreground placeholder:text-muted-foreground rounded-lg focus:border-blue-500 focus:ring-blue-500/20"
+
+        <div className="flex flex-col sm:flex-row gap-3 ">
+          <Input
+            type="url"
+            placeholder="Paste YouTube link here..."
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            className="flex-1 h-14 px-6 bg-secondary/50 border-secondary text-foreground placeholder:text-muted-foreground rounded-lg focus:border-blue-500 focus:ring-blue-500/20"
             //   disabled={loading}
-            />
-            <Button
-              type="submit"
+          />
+          <Button
+            type="submit"
+            onClick={handleDownload}
             //   disabled={loading || !url.trim()}
-              className="h-14 px-8 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white font-semibold rounded-lg transition-all duration-200 flex items-center gap-2 whitespace-nowrap"
-            >
-              <Download className="w-5 h-5" />
-              {/* {loading ? "Processing..." : "Download"} */}
-            </Button>
-          </div>
-          <p className="text-xs text-muted-foreground text-center">
-            Supports <span className="text-blue-600">MP4, MP3, and more</span> formats. Maximum file size: 2GB
-          </p>
-        </motion.form>
+            className="h-14 px-8 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white font-semibold rounded-lg transition-all duration-200 flex items-center gap-2 whitespace-nowrap"
+          >
+            <Download className="w-5 h-5" />
+            {/* {loading ? "Processing..." : "Download"} */}
+          </Button>
+        </div>
+        <p className="text-xs text-muted-foreground text-center">
+          Supports <span className="text-blue-600">MP4, MP3, and more</span>{" "}
+          formats. Maximum file size: 2GB
+        </p>
 
         {/* Stats */}
         <motion.div
@@ -80,12 +131,14 @@ export function HeroSection() {
             { label: "Uptime", value: "99.9%" },
           ].map((stat) => (
             <div key={stat.label} className="text-center">
-              <div className="text-2xl md:text-3xl font-bold text-blue-600">{stat.value}</div>
+              <div className="text-2xl md:text-3xl font-bold text-blue-600">
+                {stat.value}
+              </div>
               <div className="text-sm text-muted-foreground">{stat.label}</div>
             </div>
           ))}
         </motion.div>
       </div>
     </section>
-  )
+  );
 }
