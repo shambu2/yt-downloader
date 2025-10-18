@@ -3,6 +3,7 @@ import { spawn } from "child_process";
 import rateLimit from "express-rate-limit";
 
 const app = express();
+app.use(express.json())
 app.use(rateLimit({ windowMs: 60_000, max: 5 }));
 
 // Helper to validate YouTube URL
@@ -11,7 +12,8 @@ const validateYouTubeUrl = (url) =>
   /^https:\/\/youtu\.be\/[\w-]{11}/.test(url);
 
 app.get("/download", async (req, res) => {
-  const url = req.query.url;
+  // const url = req.query.url;
+  const url = req.body.url;
 
   if (!url || !validateYouTubeUrl(url)) {
     return res.status(400).send("Invalid YouTube URL");
