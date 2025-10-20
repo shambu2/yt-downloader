@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { motion } from "framer-motion";
 import { useState } from "react";
-import axios from "axios";
+// import axios from "axios";
+// import axios from "axios";
 
 export function HeroSection() {
   const [url, setUrl] = useState<any>("");
