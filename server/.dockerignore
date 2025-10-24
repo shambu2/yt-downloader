@@ -1,0 +1,22 @@
+# Node.js dependencies
+node_modules
+npm-debug.log
+package-lock.json
+
+# Temporary files
+*.mp4
+temp_*
+
+# Development files
+.env
+.git
+.gitignore
+Dockerfile
+*.md
+*.log
+
+# Editor and OS files
+.vscode
+.idea
+*.swp
+.DS_Store

@@ -1,101 +1,61 @@
-import express from "express";
-import { spawn } from "child_process";
-import rateLimit from "express-rate-limit";
-import cors from "cors";
+import express from 'express';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+import fs from 'fs/promises';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import cors from 'cors'
+// Get __dirname in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+
 const app = express();
-// app.use(express.urlencoded({ extended: true }));
-app.use(cors())
-app.use(express.json())
-app.use(rateLimit({ windowMs: 60_000, max: 5 }));
+app.use(express.json());
+app.use(cors());
+app.post('/download', async (req, res) => {
+  const { url } = req.body;
+  console.log('Received URL:', url);
 
-// Helper to validate YouTube URL
-const validateYouTubeUrl = (url) =>
-  /^https:\/\/(www\.)?youtube\.com\/watch\?v=[\w-]{11}/.test(url) ||
-  /^https:\/\/youtu\.be\/[\w-]{11}/.test(url);
+  try {
+    // Validate URL (basic check)
+    if (!url.includes('youtube.com') && !url.includes('youtu.be')) {
+      console.error('URL validation failed');
+      return res.status(400).json({ error: 'Invalid YouTube URL' });
+    }
 
-app.post("/download", async (req, res) => {
-  // const url = req.query.url;
-  // const url = req.body.url;
-  // const url = req.params.url;
-  const {url} = req.body;
+    // Generate output filename
+    const videoTitle = `video_${Date.now()}`; // Use timestamp to avoid sanitization issues
+    const finalOutputPath = path.join(__dirname, `downloaded_${videoTitle}.mp4`);
 
-  if (!url || !validateYouTubeUrl(url)) {
-    return res.status(400).send("Invalid YouTube URL");
+    // Use yt-dlp to download 1080p video with best audio
+    console.log('Downloading and merging with yt-dlp...');
+    const execPromise = promisify(exec);
+    await execPromise(`yt-dlp -f "bestvideo[height=1080][ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best" -o "${finalOutputPath}" "${url}"`);
+
+    // Send the file to the client
+    res.download(finalOutputPath, `${videoTitle}.mp4`, async err => {
+      if (err) {
+        console.error('Error sending file:', err.message);
+        res.status(500).json({ error: 'Error sending file' });
+      }
+
+      // Clean up output file
+      try {
+        await fs.unlink(finalOutputPath);
+      } catch (cleanupErr) {
+        console.error('Error cleaning up files:', cleanupErr.message);
+      }
+    });
+
+  } catch (error) {
+    console.error('Detailed error:', error.stack);
+    res.status(500).json({ error: 'Failed to download video', details: error.message });
   }
-
-  console.log("Starting download for:", url);
-
-  // Use yt-dlp to download and merge, then pipe through ffmpeg for final encoding
-  const ytdlpProcess = spawn("yt-dlp", [
-    "-f", "bv*[height>1080]+ba*/bv*[height=1080]+ba*/bv*+ba*",  // Merge video+audio
-    "-o", "-",  // Output to stdout
-    url
-  ]);
-
-  const infoProcess = spawn("yt-dlp", [
-    "--get-title",
-    "--get-filename",
-    "-o", "%(title)s",
-    url
-  ]);
-
-
-  // Use ffmpeg to ensure proper MP4 format with streaming support
-  const ffmpegProcess = spawn("ffmpeg", [
-    "-i", "pipe:0",        // input from stdin
-    "-c", "copy",          // copy streams (no re-encode)
-    "-movflags", "+frag_keyframe+empty_moov+default_base_moof",  // streaming MP4
-    "-f", "mp4",
-    "pipe:1"               // output to stdout
-  ]);
-
-  // Pipe yt-dlp output to ffmpeg
-  ytdlpProcess.stdout.pipe(ffmpegProcess.stdin);
-
-  // Set response headers
-  res.setHeader("Content-Disposition", `attachment; filename="video.mp4"`);
-  res.setHeader("Content-Type", "video/mp4");
-
-  // Pipe ffmpeg output to response
-  ffmpegProcess.stdout.pipe(res);
-
-  // Error handling
-  ytdlpProcess.stderr.on("data", (data) => {
-    console.error(`yt-dlp: ${data}`);
-  });
-
-  ffmpegProcess.stderr.on("data", (data) => {
-    console.error(`ffmpeg: ${data}`);
-  });
-
-  [ytdlpProcess, ffmpegProcess].forEach(p => {
-    p.on("error", (err) => {
-      console.error("Process error:", err);
-      if (!res.headersSent) {
-        res.status(500).send("Download failed");
-      }
-    });
-  });
-
-  ytdlpProcess.on("close", (code) => {
-    console.log(`yt-dlp closed with code ${code}`);
-    ffmpegProcess.stdin.end();
-  });
-
-  ffmpegProcess.on("close", (code) => {
-    console.log(`ffmpeg closed with code ${code}`);
-  });
-
-  // Clean up if client disconnects
-  req.on("close", () => {
-    console.log("Client disconnected, cleaning up processes");
-    [ytdlpProcess, ffmpegProcess].forEach(p => {
-      if (!p.killed) {
-        p.kill();
-      }
-    });
-  });
 });
 
-const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// Start the server
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});

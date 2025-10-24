@@ -17,21 +17,8 @@ export function HeroSection() {
   const handleDownload = async () => {
     try {
       // const response = await axios.post("http://localhost:4000/download", {
-      //   url: url,
-      //   responseType: "blob", // Important for binary data
-      // });
-
-      // const blob = new Blob([response.data], { type: "video/mp4" });
-      // const blobUrl = URL.createObjectURL(blob);
-
-      // const a = document.createElement("a");
-      // a.href = blobUrl;
-      // a.download = "video.mp4"; // filename
-      // document.body.appendChild(a); // required for Firefox
-      // a.click();
-      // a.remove();
-
-      const response = await fetch('http://localhost:4000/download', {
+  
+      const response = await fetch('http://localhost:3000/download', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -66,6 +53,7 @@ export function HeroSection() {
 
     } catch (error) {
       // console.error("Error:", error);
+      console.log("Error:", error);
       throw error;
     }
   };
