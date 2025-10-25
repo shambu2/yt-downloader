@@ -53,9 +53,12 @@ app.post('/download', async (req, res) => {
     res.status(500).json({ error: 'Failed to download video', details: error.message });
   }
 });
+app.get('/', (req, res) => {
+  res.send('YouTube Downloader Server is running.');
+});
 
 // Start the server
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

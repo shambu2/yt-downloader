@@ -9,20 +9,20 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install yt-dlp
-RUN pip3 install --no-cache-dir yt-dlp
+RUN pip3 install --break-system-packages --no-cache-dir yt-dlp
 
 # Set working directory
 WORKDIR /app
 
 # Copy package.json and install Node.js dependencies
-COPY package.json .
+COPY package*.json ./
 RUN npm install
 
 # Copy application code
-COPY server.js .
+COPY . .
 
 # Expose port
-EXPOSE 3000
+EXPOSE 5000
 
 # Command to run the application
 CMD ["node", "server.js"]

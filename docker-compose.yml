@@ -1,0 +1,21 @@
+# version: "3.8"
+
+services:
+  frontend:                              
+    build: ./frontend
+    # container_name: shambu601/yt-fe
+    ports:
+      - "3000:3000"
+    # environment:
+    #   - NODE_ENV=production
+    #   - BACKEND_URL=http://backend:5000
+    depends_on:
+      - backend
+
+  backend:
+    build: ./server
+    # container_name: shambu601/yt-be
+    ports:
+      - "5000:5000"
+
+    command: npm run dev
